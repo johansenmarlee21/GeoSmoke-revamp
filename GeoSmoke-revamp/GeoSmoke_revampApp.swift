@@ -25,7 +25,7 @@ struct GeoSmoke_revampApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MapView()
         }
         .modelContainer(sharedModelContainer)
     }
