@@ -22,14 +22,21 @@ struct UserFilterPrefence: Codable{
         case crowded
     }
     
+    enum Facilities: String, CaseIterable, Codable{
+        case chair
+        case roof
+        case wasteBin
+    }
+    
     enum CigaretteTypes: String, CaseIterable, Codable{
         case cigarette
         case eCigarette
     }
     
     
+    
     var sortMethod: SortMethod
     var ambience: Ambience?
-    var selectedFacilities: [String]
+    var selectedFacilities: [Facilities]
     var cigaretteTypes: [CigaretteTypes]
 }
