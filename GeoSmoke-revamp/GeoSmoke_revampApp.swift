@@ -13,6 +13,7 @@ struct GeoSmoke_revampApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Item.self,
+            SmokingArea.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -26,6 +27,7 @@ struct GeoSmoke_revampApp: App {
     var body: some Scene {
         WindowGroup {
             MapView()
+                .preferredColorScheme(.light)
         }
         .modelContainer(sharedModelContainer)
     }

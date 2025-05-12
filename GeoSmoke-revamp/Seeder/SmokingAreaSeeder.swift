@@ -2,6 +2,29 @@ import SwiftData
 import Foundation
 
 struct SmokingAreaSeeder {
+    
+    static func seedIfNeeded(context: ModelContext) async{
+        let descriptor = FetchDescriptor<SmokingArea>()
+        
+        do{
+            let existing = try context.fetchCount(descriptor)
+            if existing == 0 {
+                let areas = seed()
+                for area in areas{
+                    context.insert(area)
+                }
+                try context.save()
+                print("sucessssssss")
+            }else{
+                print("already seeded")
+            }
+        }catch{
+            print("error in seeding the smoking area")
+        }
+        
+    }
+    
+    
     static func seed() -> [SmokingArea] {
         return [
             SmokingArea(

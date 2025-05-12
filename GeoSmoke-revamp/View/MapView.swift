@@ -1,20 +1,38 @@
-//
-//  MapView.swift
-//  GeoSmoke-revamp
-//
-//  Created by Johansen Marlee on 09/05/25.
-//
-
-import Foundation
 import SwiftUI
+import SwiftData
+import MapKit
+import _MapKit_SwiftUI
 
 struct MapView: View {
+    @StateObject private var viewModel = MapViewModel()
+    @Environment(\.modelContext) private var modelContext
+    
     var body: some View {
-        Text("MapView")
+        Map(position: $viewModel.cameraPosition, selection: $viewModel.selectedLocation) {
+            UserAnnotation()
+            
+            ForEach(viewModel.locations) { location in
+                let coordinate = CLLocationCoordinate2D(latitude: location.latitude, longitude: location.longitude)
+                Annotation(location.name, coordinate: coordinate){
+                    Image("MapAnnotation")
+                        .resizable()
+                        .frame(width: 33, height: 42)
+                        
+                }
+                .tag(location)
+            }
+        }
+        .mapStyle(.standard(elevation: .realistic, pointsOfInterest: .excludingAll))
+        .onAppear {
+            viewModel.setCameraPosition()
+            Task {
+                await viewModel.loadInitialData(context: modelContext)
+            }
+        }
     }
 }
 
-
 #Preview {
     MapView()
+        .modelContainer(for: SmokingArea.self)
 }
