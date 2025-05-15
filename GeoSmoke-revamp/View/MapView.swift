@@ -16,7 +16,7 @@ struct MapView: View {
                 Annotation(location.name, coordinate: coordinate){
                     Image("MapAnnotation")
                         .resizable()
-                        .frame(width: 33, height: 42)
+                        .frame(width: 28, height: 38)
                         
                 }
                 .tag(location)

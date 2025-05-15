@@ -26,8 +26,10 @@ struct GeoSmoke_revampApp: App {
 
     var body: some Scene {
         WindowGroup {
-            MapView()
+            RootView()
                 .preferredColorScheme(.light)
+//            MapView()
+//                .preferredColorScheme(.light)
         }
         .modelContainer(sharedModelContainer)
     }
