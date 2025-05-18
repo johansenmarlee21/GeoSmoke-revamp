@@ -13,16 +13,20 @@ struct SmokingAreaCardView: View {
     
     var area: SmokingArea
     var distance: String
+    let isSelected: Bool
     
     var body: some View {
         VStack{
             HStack{
-                Image("TheShady1")
+                Image(area.photo)
                     .resizable()
                     .scaledToFill()
                     .frame(width: 105, height: 67)
                     .cornerRadius(8)
                     .clipped()
+                    .padding(.leading, isSelected ? 22 : 0)
+                    .animation(.easeInOut(duration: 0.25), value: isSelected)
+
                 VStack(alignment: .leading, spacing: 0){
                     Text(area.name)
                         .font(.body)
@@ -39,16 +43,29 @@ struct SmokingAreaCardView: View {
                         .fontWeight(.semibold)
                         .foregroundColor(.orangetheme)
                 }
+                .animation(.easeInOut(duration: 0.25), value: isSelected)
                 Spacer()
                 Button(action: {}) {
-                    Image(systemName: "chevron.right")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 13)
-                        .foregroundColor(Color.orangetheme)
+                    ZStack {
+                        Image(systemName: "chevron.right")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 13)
+                            .opacity(isSelected ? 0 : 1)
+                        
+                        Image(systemName: "chevron.right.circle.fill")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 20)
+                            .opacity(isSelected ? 1 : 0)
+                    }
+                    .foregroundColor(.orangetheme)
+                    .animation(.easeInOut(duration: 0.25), value: isSelected)
                 }
+
             }
             .padding(.horizontal)
+            .background(Color.white)
             Rectangle()
                 .frame(height: 3)
                 .foregroundColor(Color.gray)
@@ -58,7 +75,6 @@ struct SmokingAreaCardView: View {
         .frame(maxWidth: .infinity)
         .frame(height: 83)
         .padding(.top, 6)
-//        .background(Color.red)
     }
 }
 
@@ -84,5 +100,5 @@ struct SmokingAreaCardView: View {
                                     UserFilterPrefence.CigaretteTypes.cigarette.rawValue
                                 ]
                             )
-                            , distance: "23")
+                        , distance: "23", isSelected: true)
 }

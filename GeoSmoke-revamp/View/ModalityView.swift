@@ -8,65 +8,158 @@
 import Foundation
 import SwiftUI
 import SwiftData
+import MapKit
+import CoreLocation
 
 struct ModalityView: View {
     
-    @ObservedObject private var viewModel = ModalityViewModel()
+    @ObservedObject var viewModel: ModalityViewModel
+    @Binding var selectedDetent: PresentationDetent
     @Environment(\.modelContext) private var modelContext
+    @Binding var selectedArea: SmokingArea?
+    @ObservedObject var filterViewModel: FilterViewModel
+    @ObservedObject var mapViewModel: MapViewModel
+    @State private var showingFilterView = false
     
-//    init(viewModel: ModalityViewModel = ModalityViewModel()) {
-//            self.viewModel = viewModel
-//    }
     
     var body: some View{
         
         NavigationView{
             VStack(alignment: .leading){
-                Text("Nearest")
+                Text(viewModel.sortingOption.displayName)
                     .font(.title2)
                     .fontWeight(.bold)
                     .padding(.horizontal)
                 
-                HStack{
-                    Text("All Results")
-                    Spacer()
-                    Rectangle()
-                        .frame(width: 2, height: 38)
-                        .foregroundColor(Color.gray)
-                    Button(action:{
-                        
-                    }){
-                        Image(systemName: "line.3.horizontal.decrease")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 25)
-                            .foregroundColor(.darkGreen)
-                    }
-                        
-                }
-                .padding(.horizontal)
-                Rectangle()
-                    .frame(height: 3)
-                    .foregroundColor(Color.gray)
-                    .opacity(0.09)
-                
-                ScrollView{
-                    LazyVStack(spacing: 0){
-                        ForEach(viewModel.filteredSmokingAreas) {area in
-                            SmokingAreaCardView(area: area, distance: viewModel.distance(from: area))
+                if selectedDetent == .fraction(0.65){
+                    if showingFilterView {
+                        let newFilterVM = FilterViewModel(
+                            selectedAmbience: UserFilterPrefence.Ambience(rawValue: viewModel.selectedAmbience ?? "") ?? .all,
+                            selectedCrowdLevel: UserFilterPrefence.CrowdLevel(rawValue: viewModel.selectedCrowdLevel ?? "") ?? .all,
+                            selectedFacilities: Set(viewModel.selectedFacilities.compactMap { UserFilterPrefence.Facilities(rawValue: $0) }),
+                            selectedCigaretteTypes: Set(viewModel.selectedCigaretteTypes.compactMap { UserFilterPrefence.CigaretteTypes(rawValue: $0) })
+                        )
+                        FilterView(
+                            viewModel: filterViewModel,
+                            modalityViewModel: viewModel,
+                            mapViewModel: mapViewModel
+                        ) {
+                            showingFilterView = false
                         }
-                    }
-                }
+                    }else{
+                        HStack {
+                            if viewModel.hasActiveFilters {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 10) {
+                                        
+                                        // Ambience chip
+                                        if let ambienceRaw = viewModel.selectedAmbience,
+                                           let ambience = UserFilterPrefence.Ambience(rawValue: ambienceRaw),
+                                           ambience != .all {
+                                            ReusableFilterChipView(image: ambience.systemImage, label: ambienceRaw) {
+                                                viewModel.selectedAmbience = UserFilterPrefence.Ambience.all.rawValue
+                                                viewModel.applyStoredFilters()
+                                            }
+                                        }
+                                        
+                                        // Crowd level chip
+                                        if let crowdRaw = viewModel.selectedCrowdLevel,
+                                           let crowd = UserFilterPrefence.CrowdLevel(rawValue: crowdRaw),
+                                           crowd != .all {
+                                            ReusableFilterChipView(image: crowd.systemImage, label: crowdRaw) {
+                                                viewModel.selectedCrowdLevel = UserFilterPrefence.CrowdLevel.all.rawValue
+                                                viewModel.applyStoredFilters()
+                                            }
+                                        }
+                                        
+                                        // Facility chips
+                                        ForEach(viewModel.selectedFacilities, id: \.self) { facilityRaw in
+                                            if let facility = UserFilterPrefence.Facilities(rawValue: facilityRaw) {
+                                                ReusableFilterChipView(image: facility.systemImage, label: facilityRaw) {
+                                                    viewModel.selectedFacilities.removeAll { $0 == facilityRaw }
+                                                    viewModel.applyStoredFilters()
+                                                }
+                                            }
+                                        }
+                                        
+                                        // Cigarette type chips
+                                        ForEach(viewModel.selectedCigaretteTypes, id: \.self) { typeRaw in
+                                            if let type = UserFilterPrefence.CigaretteTypes(rawValue: typeRaw) {
+                                                ReusableFilterChipView(image: type.systemImage, label: typeRaw) {
+                                                    viewModel.selectedCigaretteTypes.removeAll { $0 == typeRaw }
+                                                    viewModel.applyStoredFilters()
+                                                }
+                                            }
+                                        }
+                                    }
+                                    .padding(.vertical, 3)
+                                    .padding(.leading, 3)
+                                }
+                            } else {
+                                Text("All Results")
+                                    .font(.subheadline)
+                            }
 
+                            Spacer()
+
+                            Rectangle()
+                                .frame(width: 2, height: 38)
+                                .foregroundColor(Color.gray)
+
+                            Button(action: {
+                                viewModel.syncFiltersToFilterViewModel()
+                                showingFilterView = true
+                            }) {
+                                Image(systemName: "line.3.horizontal.decrease")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 25)
+                                    .foregroundColor(.darkGreen)
+                            }
+                        }
+                        .padding(.horizontal)
+                        Rectangle()
+                            .frame(height: 3)
+                            .foregroundColor(Color.gray)
+                            .opacity(0.09)
+                        
+                        
+                        if viewModel.isLoading {
+                            ProgressView("Loading...")
+                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                        } else {
+                            ScrollView {
+                                LazyVStack(spacing: 0) {
+                                    ForEach(viewModel.filteredSmokingAreas) { area in
+                                        SmokingAreaCardView(
+                                            area: area,
+                                            distance: viewModel.distance(from: area),
+                                            isSelected: area.id == selectedArea?.id
+                                        )
+                                        .onTapGesture {
+                                            selectedArea = area
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                    }
+                    
+                }
             }
             .padding(.horizontal, 0)
+            .padding(.top, 15)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .onAppear{
-                print("testing")
-                viewModel.loadSmokingAreas(from: modelContext)
-                    viewModel.applyFilters()
-                
+            .onAppear {
+                Task {
+                    await viewModel.loadSmokingAreas(from: modelContext)
+                    await MainActor.run {
+                        viewModel.applyStoredFilters()
+                    }
+                }
             }
+
         }
         
     }

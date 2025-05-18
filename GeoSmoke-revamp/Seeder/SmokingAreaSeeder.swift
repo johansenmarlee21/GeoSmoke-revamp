@@ -75,7 +75,7 @@ struct SmokingAreaSeeder {
                 location: "GOP 6",
                 longitude: 106.654619,
                 latitude: -6.303563,
-                photo: "EcopuffCorner1",
+                photo: "EcopufCorner1",
                 allPhoto: ["EcopuffCorner1", "EcopuffCorner2"],
                 disposalPhoto: "EcopuffCorner2",
                 disposalDirection: "Find the stairs located near you, find for the nearest disposal unit that located near the lobby.",
